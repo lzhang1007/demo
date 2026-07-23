@@ -29,43 +29,50 @@ class CustomNestedScrollWebView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val action = event.actionMasked
-        
+
         when (action) {
             MotionEvent.ACTION_DOWN -> {
                 mLastMotionY = event.y.toInt()
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH)
             }
-            
+
             MotionEvent.ACTION_MOVE -> {
                 val y = event.y.toInt()
                 var deltaY = mLastMotionY - y
-                
+
                 // 尝试让父容器先消费滚动事件
-                if (dispatchNestedPreScroll(0, deltaY, mScrollConsumed, mScrollOffset, ViewCompat.TYPE_TOUCH)) {
+                if (dispatchNestedPreScroll(
+                        0,
+                        deltaY,
+                        mScrollConsumed,
+                        mScrollOffset,
+                        ViewCompat.TYPE_TOUCH
+                    )
+                ) {
                     deltaY -= mScrollConsumed[1]
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
                 }
-                
+
                 mLastMotionY = y
-                
+
                 // WebView 滚动剩余部分
                 if (deltaY != 0) {
                     scrollBy(0, deltaY)
                 }
-                
+
                 // 如果 WebView 滑到了顶部且还有未消费的滚动量，传递给父容器
                 val webViewScrollY = scrollY
                 if (webViewScrollY == 0 && deltaY > 0) {
                     dispatchNestedScroll(0, 0, 0, deltaY, mScrollOffset, ViewCompat.TYPE_TOUCH)
                 }
             }
-            
+
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
                 stopNestedScroll(ViewCompat.TYPE_TOUCH)
             }
         }
-        
+
         return super.onTouchEvent(event)
     }
 
@@ -158,11 +165,35 @@ class CustomNestedScrollWebView @JvmOverloads constructor(
         return dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, ViewCompat.TYPE_TOUCH)
     }
 
-    override fun dispatchNestedFling(velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
+    override fun dispatchNestedFling(
+        velocityX: Float,
+        velocityY: Float,
+        consumed: Boolean
+    ): Boolean {
         return mChildHelper.dispatchNestedFling(velocityX, velocityY, consumed)
     }
 
     override fun dispatchNestedPreFling(velocityX: Float, velocityY: Float): Boolean {
         return mChildHelper.dispatchNestedPreFling(velocityX, velocityY)
+    }
+
+    override fun dispatchNestedScroll(
+        dxConsumed: Int,
+        dyConsumed: Int,
+        dxUnconsumed: Int,
+        dyUnconsumed: Int,
+        offsetInWindow: IntArray?,
+        type: Int,
+        consumed: IntArray
+    ) {
+        mChildHelper.dispatchNestedScroll(
+            dxConsumed,
+            dyConsumed,
+            dxUnconsumed,
+            dyUnconsumed,
+            offsetInWindow,
+            type,
+            consumed
+        )
     }
 }
